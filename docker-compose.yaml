@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  app:
+    image: openjdk:17-alpine
+    container_name: app-cqrs
+    volumes:
+      - ./app.jar:/app.jar
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-cqrs:5432/cqrs
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=admin
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka-cqrs:9092
+    command: [ "java", "-jar", "/app.jar" ]
+    depends_on:
+      - postgres-cqrs
+      - kafka-cqrs
+
+  postgres-cqrs:
+    image: postgres:latest
+    container_name: postgres-cqrs
+    restart: always
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: admin
+    ports:
+      - "5432:5432"
+
+  zookeeper:
+    image: zookeeper:latest
+    ports:
+      - "2181:2181"
+  kafka-cqrs:
+    image: ubuntu/kafka:latest
+    ports:
+      - "9092:9092"
+    container_name: kafka-cqrs
+    depends_on:
+      - zookeeper
